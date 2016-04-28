@@ -1,0 +1,38 @@
+{
+  "name": "runbikehike",
+  "version": "0.2.0",
+  "engines": [
+    "node = 0.8.x"
+  ],
+  "description": "Run, Bike, Hike... allow you to record your running or biking sessions, so you can follow your sporting progress.",
+  "main": "server.js",
+  "scripts": {
+    "check:js": "./scripts/check-js.sh",
+    "dev": "NODE_ENV=dev nodemon --debug ./server.js",
+    "start": "node server.js",
+    "test": "mocha tests/tests.js"
+  },
+  "config": {
+    "ghooks": {
+      "pre-commit": "./scripts/verify.sh && npm run test/tests.js"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nicodel/runbikehike.git"
+  },
+  "author": "Nicolas Delebecque",
+  "license": "MPL2.0 licence",
+  "bugs": {
+    "url": "https://github.com/nicodel/runbikehike/issues"
+  },
+  "icon-path": "img/icon128.png",
+  "dependencies": {
+    "americano": "^0.4.2",
+    "body-parser": "^1.13.2",
+    "cozydb": "0.1.3",
+    "express": "^4.13.1",
+    "pouchdb": "5.1.0",
+    "webl10n": "^1.0.0"
+  }
+}
