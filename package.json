@@ -11,12 +11,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://gitlab.com/nicodel/runbikehike-cozy.git"
+    "url": "https://github.com/nicodel/runbikehike-cozy.git"
   },
   "author": "Nicolas Delebecque",
   "license": "MPL2.0 licence",
   "bugs": {
-    "url": "https://gitlab.com/nicodel/runbikehike-cozy/issues"
+    "url": "https://github.com/nicodel/runbikehike-cozy/issues"
   },
   "cozy-displayName": "Run, Bike, Hike...",
   "cozy-permissions": {
