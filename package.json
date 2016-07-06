@@ -11,17 +11,26 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/nicodel/runbikehike-cozy.git"
+    "url": "https://gitlab.com/nicodel/runbikehike-cozy.git"
   },
   "author": "Nicolas Delebecque",
   "license": "MPL2.0 licence",
   "bugs": {
-    "url": "https://github.com/nicodel/runbikehike-cozy/issues"
+    "url": "https://gitlab.com/nicodel/runbikehike-cozy/issues"
   },
   "cozy-displayName": "Run, Bike, Hike...",
   "cozy-permissions": {
-    "docs": {
-      "description": "docs contains all the informations"
+    "body_weight": {
+      "description": "access to body weight data"
+    },
+    "sessions": {
+      "description": "access to sport sessions"
+    },
+    "messages": {
+      "description": "access to application messages"
+    },
+    "preferences": {
+      "description": "access to application preferences"
     }
   },
   "icon-path": "img/icon128.png",
