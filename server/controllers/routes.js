@@ -1,24 +1,43 @@
 /* jshint strict: true, node: true */
 'use strict';
 
-var docs = require('./docs');
+// var dashboard = require('./dashboard');
+var messages = require('./messages');
+var sessions = require('./sessions');
+var body_weight = require('./body_weight');
 var preferences = require('./preferences');
 
 module.exports = {
-  'docs': {
-    get: docs.getAll,
-    post: docs.add,
+  'dashboard': {
+    get: function () { return null; }
   },
-  'docs/:id': {
-    get: docs.getOne,
-    put: docs.add
+  'messages': {
+    get: messages.getAll,
+    post: messages.add,
+  },
+  'messages/:id': {
+    get: messages.getOne,
+    put: messages.add
+  },
+  'sessions': {
+    get: sessions.getAll,
+    post: sessions.add
+  },
+  'sessions/:id': {
+    get: sessions.getOne,
+    put: sessions.update,
+    delete: sessions.remove
+  },
+  'body_weight': {
+    get: body_weight.getAll,
+    post: body_weight.add
+  },
+  'body_weight/:id': {
+    get: body_weight.getOne,
+    put: body_weight.update,
+    delete: body_weight.remove
   },
   'preferences': {
-    get: preferences.getAll,
-    post: preferences.update,
-    put: preferences.update
-  },
-  'preferences/:id': {
     get: preferences.getAll,
     put: preferences.update
   }

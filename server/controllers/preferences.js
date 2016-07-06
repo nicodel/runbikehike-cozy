@@ -22,7 +22,7 @@ module.exports.getAll = function(req, res, next) {
           height    : 180,
           weight    : 75
         };
-        Preferences.add(preferences, function(err, doc) {
+        Preferences.create(preferences, function(err, doc) {
           if (err !== null) {
             res.status(500).send({error: 'An error occured - ' + err + doc});
           } else {
