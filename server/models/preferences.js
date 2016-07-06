@@ -19,15 +19,15 @@ Preferences.all = function(callback) {
     }
   });
 };
-Preferences.add = function(data, callback) {
-  Preferences.create(data, function(err, preferences) {
-    if (err) {
-      callback(err);
-    } else {
-      callback(null, preferences);
-    }
-  });
-};
+// Preferences.add = function(data, callback) {
+//   Preferences.create(data, function(err, preferences) {
+//     if (err) {
+//       callback(err);
+//     } else {
+//       callback(null, preferences);
+//     }
+//   });
+// };
 Preferences.update = function(data, callback) {
   Preferences.find(data.id, function(err, res) {
 /*    console.log('res to be updated', res);
