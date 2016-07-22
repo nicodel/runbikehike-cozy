@@ -54,6 +54,14 @@ module.exports.getOne = function(req, res, next) {
 };
 module.exports.remove = function(req, res, next) {
     console.log('removing one', req.params.id);
+    Sessions.destroy(req.params.id, function (err, complete) {
+      if (err !== null) {
+        next(null);
+      } else {
+        console.log('session removed', complete);
+        res.send(complete);
+      }
+    });
 };
 module.exports.update = function(req, res, next) {
     console.log('updating one', req.params.id);

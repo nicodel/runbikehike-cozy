@@ -17,6 +17,7 @@
 </head>
 
 <body id="app">
+  <div class="modal hidden" id="modal" disabled="true"></div>
   <nav>
     <img src="img/logo_white_128.png" alt="Run, Bike, Hike... logo" class="align-left">
     <!-- <h2 id="new&#45;session&#45;btn" class=" new&#45;line align&#45;left">
@@ -62,56 +63,6 @@
       <h2 data-l10n-id="select-body"></h2>
       <form id="select-body"></form>
     </div> -->
-  </section>
-  <section id="tracking-view" disabled="true" class="tracking-view">
-    <ul class="margin-left-5">
-      <li>
-        <div data-l10n-id="elapsed-time" class="home-title text-big text-thin align-center">Elapsed time</div>
-        <div id="home-chrono" class="home-value align-center text-huger text-thin new-line">0:00:00</div>
-        <!-- <button data&#45;l10n&#45;id="pause" id="btn&#45;pause" class="hidden recommend small icon icon&#45;pause">Pause</button> -->
-        <span id="btn-pause" class="icon-pause align-right hidden"><span id="icon-pause" class="fa fa-pause fa-2x"></span></span>
-      </li>
-      <li>
-        <div data-l10n-id="distance" class="home-title text-big text-thin align-center">Distance
-        <span id="dist-unit"></span></div>
-        <div id="home-dist" class="home-value align-center text-huge text-thin">--</div>
-      </li>
-      <li>
-        <div data-l10n-id="speed" class="home-title text-big text-thin align-center">Speed
-        <span id="speed-unit"></span></div>
-        <div id="home-speed" class="home-value align-center text-huge text-thin">--</div>
-      </li>
-      <li class="bottom">
-        <div data-l10n-id="altitude"  class="new-line home-title text-small text-thin">Altitude
-        <span id="alt-unit"></span></div>
-        <div id="home-alt" class="new-line home-value align-center text-big text-thin">?</div>
-
-        <div data-l10n-id="accuracy" class="new-line home-title text-small text-thin">Accuracy
-        <span id="acc-unit"></span></div>
-        <div id="home-acc" class="new-line home-value align-center text-big text-thin">?</div>
-      </li>
-      <li class="bottom">
-        <div data-l10n-id="latitude" class="new-line home-title text-small text-thin">Latitude</div>
-        <div id="home-lat" class="new-line align-center home-value-right text-small text-thin">?</div>
-
-        <div data-l10n-id="longitude" class="new-line home-title text-small text-thin">Longitude</div>
-        <div id="home-lon" class="new-line align-center home-value-right text-small text-thin">?</div>
-
-        <div data-l10n-id="direction" class="new-line home-title text-small text-thin">Direction</div>
-        <div id="home-dir" class="new-line align-center home-value-right text-small text-thin">?</div>
-      </li>
-      <li class="button">
-        <button data-l10n-id="start" id="btn-start-stop" class="recommend big">Start</button>
-      </li>
-      <li id="message" class="front">
-        <div id="message-area" class="align-center">
-          <progress id="spinner"></progress>
-          <p data-l10n-id="retreiving" id="msg" class="text-big align-center">Retrieving GPS signal. It may take some time...</p>
-          <p data-l10n-id="accmsg" id="accmsg" class="hidden text-big align-center"></p>
-          <p id="errmsg" class="hidden text-big align-center"></p>
-        </div>
-      </li>
-    </ul>
   </section>
   <section id="dashboard-view" disabled="false" class="dashboard-view">
     <h1 data-l10n-id="dashboard"></h1>
@@ -531,6 +482,7 @@
   </script>
 
   <script type="text/template" id="session-details-template">
+  <i class="fa fa-2x fa-trash" aria-hidden="true" id="session-1-delete" session_id="<%= session_cid %>"></i>
   <div class="session-totals-container">
   <div data-l10n-id="date" class="width-half text-1-4 align-left">Date
     <span id="session-date" class="align-right"><%= date %></span>
@@ -565,7 +517,7 @@
 
   </div>
   <div class="accordeon">
-    <section class="map">
+    <section>
       <h2 data-l10n-id="map">Map</h2>
       <div id="session-map" class="map"></div>
       <input type="checkbox" id="geo" />
@@ -611,6 +563,7 @@
   </script>
 
   <script type="text/template" id="session-details-template-2">
+      <i class="fa fa-2x fa-trash" aria-hidden="true" id="session-2-delete" session_id="<%= session_cid %>"></i>
   <div class="session-totals-container">
     <div data-l10n-id="date" class="width-half text-1-4 align-left">
       <span id="session-date" class="align-right"><%= date %></span>
@@ -634,6 +587,7 @@
   </script>
 
   <script type="text/template" id="session-details-template-3">
+      <i class="fa fa-2x fa-trash" aria-hidden="true" id="session-3-delete" session_id="<%= session_cid %>"></i>
   <div class="session-totals-container">
     <div data-l10n-id="date" class="width-half text-1-4 align-left">
       <span id="session-date" class="align-right"><%= date %></span>
@@ -651,6 +605,18 @@
   </div>
   </script>
 
+  <script type="text/template" id="modal-delete-template">
+    <div session_id="<% session_cid %>">
+      <h1 data-l10n-id="confirmation">Confirmation</h1>
+      <p><% name %></p>
+      <p>
+        <span>Are you sure you want to delete it?</span>
+      </p>
+      <button id="btn-cancel-delete" class="cancel" data-l10n-id="cancel">Cancel</button>
+      <button id="btn-confirm-delete" role="button" class="danger" data-l10n-id="confirm">Confirm</button>
+    </div>
+  </script>
+
   <script type="text/javascript" src="lib/l10n.js"></script>
   <script type="text/javascript" src="lib/microtemplates.js"></script>
   <script type="text/javascript" src="lib/exoskeleton.js"></script>
@@ -660,7 +626,7 @@
   <script type="text/javascript" src="lib/d3.js"></script>
   <script type="text/javascript" src="lib/crossfilter.js"></script>
   <script type="text/javascript" src="lib/dc.js"></script>
-  <!-- <script type="text/javascript" src="js/workers/data_compute.js"></script> -->
+  <script type="text/javascript" src="js/workers/data_compute.js"></script>
   <script type="text/javascript" src="app.js"></script>
 </body>
 </html>

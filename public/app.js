@@ -1197,8 +1197,29 @@ views.detailled_1 = Backbone.NativeView.extend({
         map: document.getElementById("session-map-container")
     },
     template: microtemplate(document.getElementById("session-details-template").innerHTML),
+    events: {
+        "click #session-1-delete": "showModal"
+    },
     initialize: function() {
         this.render();
+    },
+    showModal: function() {
+        console.log("showModal");
+        new ModalView({
+            model: this.model
+        });
+    },
+    deleteSession: function(el) {
+        var session = el.target.getAttribute("session_id");
+        this.model.destroy({
+            success: function(model, response) {
+                console.log("deleteSession - success", model, response);
+                Sessions.trigger("removed");
+            },
+            error: function(model, error) {
+                console.log("deleteSession - error", model, error);
+            }
+        });
     },
     render: function() {
         var user_unit = Preferences.get("unit");
@@ -1221,7 +1242,18 @@ views.detailled_1 = Backbone.NativeView.extend({
         });
         var data = this.model.get("data");
         if (data.length !== 0) {
-            this.dataCompute(data, user_unit);
+            if (!!window.SharedWorker) {
+                var that = this;
+                var dataWorker = new SharedWorker("js/workers/data_compute.js");
+                console.log("dataWorker", dataWorker);
+                dataWorker.port.postMessage([ data, user_unit ]);
+                dataWorker.port.onmessage = function(e) {
+                    console.log("data have been computed", e.data);
+                    that.renderGraphs(e.data[0], e.data[1]);
+                    that.renderMap();
+                };
+                console.log("dataWorker.port", dataWorker.port);
+            }
         }
     },
     dataCompute: function(data, user_unit) {
@@ -1279,6 +1311,7 @@ views.detailled_1 = Backbone.NativeView.extend({
         console.log("rendering map");
         var map = this.model.get("map");
         var data = this.model.get("data");
+        console.log("detail data", data[0][100]);
         if (map !== false) {
             utils.Map.initialize("session-map");
             utils.Map.getMap(data);
@@ -1397,6 +1430,9 @@ views.detailled_3 = Backbone.NativeView.extend({
     el: "#session-view",
     session_id: "",
     template: microtemplate(document.getElementById("session-details-template-2").innerHTML),
+    events: {
+        "click #session-3-delete": "deleteSession"
+    },
     initialize: function() {
         this.render();
     },
@@ -1414,6 +1450,18 @@ views.detailled_3 = Backbone.NativeView.extend({
             duration: duration.hour + ":" + duration.min + ":" + duration.sec,
             avg_speed: speed.value + " " + speed.unit,
             activity: this.model.get("activity")
+        });
+    },
+    deleteSession: function(el) {
+        var session = el.target.getAttribute("session_id");
+        this.model.destroy({
+            success: function(model, response) {
+                console.log("deleteSession - success", model, response);
+                Sessions.trigger("removed");
+            },
+            error: function(model, error) {
+                console.log("deleteSession - error", model, error);
+            }
         });
     }
 });
@@ -1441,7 +1489,6 @@ views.new_1 = Backbone.NativeView.extend({
     },
     initialize: function() {
         this.listenTo(this.model, "import", this.renderImportedData);
-        this.listenTo(this.model, "change:map", this.renderMap);
     },
     importFile: function() {
         var reader = new FileReader();
@@ -1521,15 +1568,6 @@ views.new_1 = Backbone.NativeView.extend({
             document.getElementById("import-btn").removeAttribute("disabled");
         } else {
             document.getElementById("import-btn").setAttribute("disabled", "disabled");
-        }
-    },
-    renderMap: function() {
-        var map = this.model.get("map");
-        var data = this.model.get("data");
-        if (map !== false) {
-            utils.Map.initialize("new-map");
-            utils.Map.getMap(data);
-            document.getElementById("new-map-container").className = "new-line";
         }
     },
     renderCalories: function() {
@@ -2696,48 +2734,6 @@ var Dashboard = new DashboardCollection();
 
 "use strict";
 
-var IndicatorsView = Backbone.NativeView.extend({
-    el: "#indicators",
-    template: microtemplate(document.getElementById("indicators-template").innerHTML),
-    initialize: function() {
-        this.collection = Dashboard;
-        this.listenTo(this.collection, "add", this.render);
-        this.listenTo(this.collection, "sync", this.render);
-        this.listenTo(Preferences, "change", this.render);
-        this.render();
-    },
-    render: function() {
-        var totals = {
-            sessions: 0,
-            calories: 0,
-            distance: 0,
-            duration: 0
-        };
-        if (this.collection.length !== 0) {
-            var sessions = this.collection.where({
-                type: "session"
-            });
-            sessions.forEach(function(item) {
-                totals.sessions += 1;
-                totals.calories += parseInt(item.get("calories"), 10);
-                totals.distance += parseFloat(item.get("distance"), 10);
-                totals.duration += parseInt(item.get("duration"), 10);
-            });
-        }
-        var dist = utils.Helpers.distanceMeterToChoice(Preferences.get("unit"), totals.distance, false);
-        var duration = utils.Helpers.formatDuration(totals.duration);
-        this.el.innerHTML = this.template({
-            sessions: totals.sessions,
-            calories: totals.calories,
-            distance: dist.value + " " + dist.unit,
-            duration: duration.hour + ":" + duration.min + ":" + duration.sec
-        });
-        return this;
-    }
-});
-
-"use strict";
-
 var DashboardView = Backbone.NativeView.extend({
     el: "#dashboard",
     events: {
@@ -2845,6 +2841,88 @@ var DashboardView = Backbone.NativeView.extend({
                 this.collection.trigger("dashboard-entry-selected", view.model);
             }
         }, this);
+    }
+});
+
+"use strict";
+
+var IndicatorsView = Backbone.NativeView.extend({
+    el: "#indicators",
+    template: microtemplate(document.getElementById("indicators-template").innerHTML),
+    initialize: function() {
+        this.collection = Dashboard;
+        this.listenTo(this.collection, "add", this.render);
+        this.listenTo(this.collection, "sync", this.render);
+        this.listenTo(Preferences, "change", this.render);
+        this.render();
+    },
+    render: function() {
+        var totals = {
+            sessions: 0,
+            calories: 0,
+            distance: 0,
+            duration: 0
+        };
+        if (this.collection.length !== 0) {
+            var sessions = this.collection.where({
+                type: "session"
+            });
+            sessions.forEach(function(item) {
+                totals.sessions += 1;
+                totals.calories += parseInt(item.get("calories"), 10);
+                totals.distance += parseFloat(item.get("distance"), 10);
+                totals.duration += parseInt(item.get("duration"), 10);
+            });
+        }
+        var dist = utils.Helpers.distanceMeterToChoice(Preferences.get("unit"), totals.distance, false);
+        var duration = utils.Helpers.formatDuration(totals.duration);
+        this.el.innerHTML = this.template({
+            sessions: totals.sessions,
+            calories: totals.calories,
+            distance: dist.value + " " + dist.unit,
+            duration: duration.hour + ":" + duration.min + ":" + duration.sec
+        });
+        return this;
+    }
+});
+
+"use strict";
+
+var ModalView = Backbone.NativeView.extend({
+    el: "#modal",
+    template: microtemplate(document.getElementById("modal-delete-template").innerHTML),
+    events: {
+        "click #btn-confirm-delete": "deleteConfirmed",
+        "click #btn-cancel-delete": "hideModal"
+    },
+    initialize: function() {
+        this.render();
+    },
+    render: function() {
+        this.el.setAttribute("disabled", "false");
+        this.el.className = "modal";
+        this.el.innerHTML = this.template({
+            session_cid: this.model.get("session_cid"),
+            name: this.model.get("name")
+        });
+        return this;
+    },
+    deleteConfirmed: function() {
+        var that = this;
+        this.model.destroy({
+            success: function(model, response) {
+                console.log("deleteSession - success", model, response);
+                Sessions.trigger("removed");
+                that.hideModal();
+            },
+            error: function(model, error) {
+                console.log("deleteSession - error", model, error);
+            }
+        });
+    },
+    hideModal: function() {
+        this.el.setAttribute("disabled", "true");
+        this.el.className = "modal hidden";
     }
 });
 
@@ -2996,193 +3074,6 @@ var NewBodyWeightView = Backbone.NativeView.extend({
         b.save();
         BodyWeights.trigger("add-new", b);
         this.remove();
-    }
-});
-
-"use strict";
-
-var Tracking = Backbone.NativeView.extend({
-    el: "#tracking-view",
-    events: {
-        "click #btn-start-stop": "toggleTracking",
-        "click #btn-pause": "pauseRecording"
-    },
-    watchID: "",
-    tracking: false,
-    pause: false,
-    current_track: "",
-    nb_point: "",
-    distance: "",
-    duration: "",
-    dom: {
-        start_stop: document.getElementById("btn-start-stop"),
-        pause: document.getElementById("btn-pause"),
-        icon_pause: document.getElementById("icon-pause"),
-        chrono: document.getElementById("home-chrono"),
-        distance: document.getElementById("home-dist")
-    },
-    initialize: function() {
-        console.log("initiate tracking");
-        if (navigator.geolocation) {
-            var that = this;
-            this.watchID = navigator.geolocation.watchPosition(function(position) {
-                that.locationChanged(position);
-            }, function(error) {
-                that.locationError(error);
-            }, {
-                enableHighAccuracy: true,
-                timeout: Infinity,
-                maximunAge: 0
-            });
-        } else {
-            console.log("your browser does not support geolocation");
-        }
-    },
-    toggleTracking: function() {
-        if (this.tracking) {
-            utils.Chrono.stop();
-            var track = utils.Tracks.close();
-            this.tracking = false;
-            if (track.data.length === 0) {
-                console.log("track empty, not saving");
-            } else {
-                var session = Factory.getModel("running", {
-                    activity: "running"
-                });
-                this.model.set(session);
-                var calories = utils.Helpers.calculateCalories(Preferences.get("gender"), Preferences.get("weight"), Preferences.get("height"), new Date().getFullYear() - Preferences.get("birthyear"), track.distance, track.duration, "running");
-                this.model.set({
-                    name: track.name,
-                    duration: track.duration,
-                    distance: track.distance,
-                    avg_speed: track.distance / track.duration,
-                    calories: calories,
-                    alt_max: track.alt_max,
-                    alt_min: track.alt_min,
-                    climb_pos: track.climb_pos,
-                    climb_neg: track.climb_neg,
-                    map: false,
-                    data: []
-                });
-                console.log("new session recorded", this.model.attributes);
-                var s = Docs.add(this.model);
-                s.save();
-                Docs.trigger("add-new", s);
-            }
-        } else {
-            this.tracking = true;
-            utils.Chrono.load(this.dom.chrono);
-            utils.Chrono.start();
-            this.current_track = utils.Tracks.open();
-            this.nb_point = 0;
-            this.dom.start_stop.className = "danger big";
-            this.dom.start_stop.textContent = _("stop");
-            this.dom.pause.className = "icon-pause align-right";
-        }
-    },
-    pauseRecording: function() {
-        if (this.pause) {
-            this.dom.icon_pause.className = "fa fa-pause fa-2x";
-            this.dom.chrono.className = "home-value align-center text-huger text-thin new-line";
-            this.dom.distance.className = "home-value align-center text-huge text-thin";
-            utils.Chrono.resume();
-            this.pause = false;
-        } else {
-            this.dom.icon_pause.className = "fa fa-play fa-2x";
-            this.dom.chrono.className = "text-red home-value align-center text-huger text-thin new-line";
-            this.dom.distance.className = "text-red home-value align-center text-huge text-thin";
-            utils.Chrono.pauseIt();
-            this.pause = true;
-        }
-    },
-    locationChanged: function(inPosition) {
-        if (inPosition.coords.accuracy < 500) {
-            if (this.tracking && !this.pause) {
-                this.addNewPoint(inPosition);
-            } else if (this.tracking && this.pause) {
-                this.updateInfos(inPosition, this.distance);
-            } else {
-                this.updateInfos(inPosition, null);
-            }
-        } else {
-            this.displayAccuracy(inPosition);
-        }
-    },
-    locationError: function(inError) {
-        console.log("error:", inError);
-        if (this.tracking) {
-            this.positionError(inError);
-        } else {
-            this.displayError(inError);
-        }
-    },
-    addNewPoint: function(inPosition) {
-        if (!inPosition.coords || !inPosition.coords.latitude || !inPosition.coords.longitude) {
-            return;
-        }
-        var event = inPosition.coords;
-        var speed = event.speed;
-        var lat = event.latitude.toFixed(6);
-        var lon = event.longitude.toFixed(6);
-        var alt = event.altitude;
-        var date = new Date(inPosition.timestamp).toISOString();
-        var horizAccuracy = event.accuracy.toFixed(0);
-        var vertAccuracy = event.altitudeAccuracy.toFixed(0);
-        if (alt < -200 || alt === 0 && vertAccuracy === 0) {
-            alt = null;
-        }
-        this.distance = utils.Tracks.getDistance(lat, lon);
-        this.duration = utils.Tracks.getDuration(inPosition.timestamp);
-        this.updateInfos(inPosition, this.distance);
-        var gps_point = {
-            latitude: lat,
-            longitude: lon,
-            altitude: alt,
-            date: date,
-            speed: speed,
-            accuracy: horizAccuracy,
-            vertAccuracy: vertAccuracy
-        };
-        utils.Tracks.addNode(gps_point, this.distance, this.duration);
-    },
-    positionError: function() {},
-    updateInfos: function(inPosition, inDistance) {
-        var pref_unit = Preferences.get("unit");
-        var localizedValue = {};
-        document.getElementById("message").className = "behind hidden";
-        document.getElementById("home-lat").innerHTML = utils.Helpers.formatLatitude(inPosition.coords.latitude);
-        document.getElementById("home-lon").innerHTML = utils.Helpers.formatLongitude(inPosition.coords.longitude);
-        localizedValue = utils.Helpers.formatSmallDistance(pref_unit, inPosition.coords.altitude, false);
-        document.getElementById("home-alt").innerHTML = localizedValue.value;
-        document.getElementById("alt-unit").innerHTML = "(" + localizedValue.unit + ")";
-        localizedValue = utils.Helpers.formatSmallDistance(pref_unit, inPosition.coords.accuracy.toFixed(0), false);
-        document.getElementById("home-acc").innerHTML = "&#177; " + localizedValue.value;
-        document.getElementById("acc-unit").innerHTML = "(" + localizedValue.unit + ")";
-        if (inPosition.coords.accuracy > 25) {
-            document.getElementById("home-acc").className = "new-line home-alt align-center text-big text-thinner bad-signal";
-        } else {
-            document.getElementById("home-acc").className = "new-line home-alt align-center text-big text-thin";
-        }
-        localizedValue = utils.Helpers.formatDistance(pref_unit, inDistance, false);
-        document.getElementById("home-dist").innerHTML = localizedValue.value;
-        document.getElementById("dist-unit").innerHTML = "(" + localizedValue.unit + ")";
-        localizedValue = utils.Helpers.formatSpeed(pref_unit, inPosition.coords.speed);
-        document.getElementById("home-speed").innerHTML = localizedValue.value;
-        document.getElementById("speed-unit").innerHTML = "(" + localizedValue.unit + ")";
-        document.getElementById("msg").innerHTML = "";
-        if (inPosition.coords.heading > 0) {
-            document.getElementById("home-dir").innerHTML = inPosition.coords.heading.toFixed(0);
-        } else {
-            document.getElementById("home-dir").innerHTML = "--";
-        }
-    },
-    displayAccuracy: function(inPosition) {
-        var a = utils.Helpers.formatSmallDistance(Preferences.get("unit"), inPosition.coords.accuracy.toFixed(0), false);
-        document.getElementById("accmsg").innerHTML = _("accmsg", {
-            Accuracy: a.value,
-            Unit: a.unit
-        });
-        document.getElementById("accmsg").className = "text-big align-center";
     }
 });
 
@@ -3370,6 +3261,7 @@ var ReportsView = Backbone.NativeView.extend({
     render: function() {
         var user_unit = Preferences.get("unit");
         var red = "#FF0000";
+        var blue = "#0000FF";
         var green = "#008000";
         var dateFormat = d3.time.format.iso;
         var act_data = [];
@@ -3378,20 +3270,18 @@ var ReportsView = Backbone.NativeView.extend({
         BodyWeights.forEach(function(model) {
             item = model.attributes;
             item.formateddate = dateFormat.parse(item.date);
-            item.month = d3.time.month(item.formateddate);
+            item.day = d3.time.day(item.formateddate);
             weight_data.push(item);
         });
         console.log("weight_data", weight_data);
         var ndx_weight = crossfilter(weight_data);
         var date_weight_dim = ndx_weight.dimension(function(d) {
-            console.log("d.month", d.month);
-            return d.month;
+            return d.day;
         });
         var weightGroup = date_weight_dim.group().reduceSum(function(d) {
-            console.log("d.value", d.value);
             return parseFloat(d.value, 10);
         });
-        this.weightChart.x(d3.time.scale().domain([ new Date(new Date().getFullYear(), 0, 1), new Date(new Date().getFullYear(), 11, 31) ])).dimension(date_weight_dim).renderHorizontalGridLines(true).renderVerticalGridLines(true).brushOn(false).mouseZoomable(false).yAxisLabel("Weight (kg)").colors(red).group(weightGroup, "Weight");
+        this.weightChart.x(d3.time.scale().domain([ new Date(new Date().getFullYear(), 0, 1), new Date(new Date().getFullYear(), 11, 31) ])).dimension(date_weight_dim).renderHorizontalGridLines(true).renderVerticalGridLines(true).brushOn(false).mouseZoomable(false).yAxisLabel("Weight (kg)").colors(blue).group(weightGroup, "Weight");
         dc.renderAll();
     }
 });
@@ -3430,6 +3320,7 @@ var NavigationView = Backbone.NativeView.extend({
         this.listenTo(Dashboard, "dashboard-entry-selected", this.showEntry);
         this.listenTo(Dashboard, "sessions-entry-selected", this.showSession);
         this.listenTo(Sessions, "add-new", this.showSession);
+        this.listenTo(Sessions, "removed", this.showDashboard);
         this.listenTo(BodyWeights, "add-new", this.showDashboard);
     },
     showNewSession: function() {
