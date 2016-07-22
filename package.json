@@ -33,7 +33,7 @@
       "description": "access to application preferences"
     }
   },
-  "icon-path": "img/icon128.png",
+  "icon-path": "public/img/icon128.png",
   "dependencies": {
     "americano": "^0.4.2",
     "body-parser": "^1.13.2",
