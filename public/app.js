@@ -2683,7 +2683,7 @@ var Preferences = new preferencesmodel({
 
 var MessagesCollection = Backbone.Collection.extend({
     model: Message,
-    url: "/messages",
+    url: "messages",
     initialize: function() {
         this.listenTo(this, "sync", this.synced);
     },
@@ -2707,7 +2707,7 @@ var Messages = new MessagesCollection();
 
 var SessionsCollection = Backbone.Collection.extend({
     model: Session,
-    url: "/sessions",
+    url: "sessions",
     initialize: function() {}
 });
 
@@ -2717,7 +2717,7 @@ var Sessions = new SessionsCollection();
 
 var BodyWeightCollection = Backbone.Collection.extend({
     model: BodyWeight,
-    url: "/body_weight",
+    url: "body_weight",
     initialize: function() {}
 });
 
@@ -2727,7 +2727,7 @@ var BodyWeights = new BodyWeightCollection();
 
 var DashboardCollection = Backbone.Collection.extend({
     model: Item,
-    url: "/dashboard"
+    url: "dashboard"
 });
 
 var Dashboard = new DashboardCollection();
