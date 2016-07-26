@@ -9,7 +9,7 @@ onconnect = function(e) {
   'use strict';
   var port = e.ports[0];
   port.onmessage = function(e) {
-    importScripts('./../utils/helpers.js');
+    //importScripts('./../utils/helpers.js');
 
     var data = e.data[0];
     var user_unit = e.data[1];
@@ -41,7 +41,8 @@ onconnect = function(e) {
         if (isNaN(speed)) {
           speed = 0;
         } else {
-          speed = utils.Helpers.speedMsToChoice(user_unit, speed).value;
+          // speed = utils.Helpers.speedMsToChoice(user_unit, speed).value;
+          speed = speedMsToChoice(user_unit, speed).value;
         }
         var newbe = {
           'date'      : value.date,
