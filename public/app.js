@@ -2670,7 +2670,7 @@ var Item = Backbone.Model.extend({
 "use strict";
 
 var preferencesmodel = Backbone.Model.extend({
-    urlRoot: "/preferences",
+    urlRoot: "preferences",
     idAttribute: "_id",
     initialize: function() {}
 });
