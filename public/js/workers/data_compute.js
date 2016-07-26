@@ -69,3 +69,30 @@ onconnect = function(e) {
   };
   port.start();
 };
+
+/*
+ * Convert a velocity from meters per second into km/h or mph depending choice
+ * param {String}   choice      User choice over unit display.
+ * param {Number}   value       Speed in m/s
+ *
+ * return {Array}   s           Contains converted speed (as a Number) and unit (as a String)
+ */
+function speedMsToChoice(choice, value) {
+  "use strict";
+  var s = {};
+  if (value === null || value === undefined || value < 0 || isNaN(value) || value === Infinity) {
+    s.value = '--';
+  } else {
+    if (choice === 'metric') {
+      s.value = (value * 3.6).toFixed(1);
+      s.unit = 'km/h';
+    } else if (choice === 'imperial') {
+      s.value = (value * 2.237).toFixed(1);
+      s.unit = 'mph';
+    } else {
+      s.value = value.toFixed(1);
+      s.unit = 'm/s';
+    }
+  }
+  return s;
+}
