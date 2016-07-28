@@ -27,5 +27,4 @@ www/*
 node_modules
 
 # CozyDB
-docs-*
-docs/*
+db*
