@@ -929,7 +929,7 @@ var models = models || {};
 
 models.cycling = function(options) {
     this.type = options.type || "session";
-    this.family = options.family || "athletics";
+    this.family = options.family || "cycling";
     this.activity = options.activity || "";
     this.date = options.date || new Date().toISOString();
     this.name = options.name || "";
@@ -951,7 +951,7 @@ var models = models || {};
 
 models.fighting = function(options) {
     this.type = options.type || "fighting";
-    this.family = options.family || "net";
+    this.family = options.family || "fighting";
     this.activity = options.activity || "";
     this.date = options.date || new Date().toISOString();
     this.name = options.name || "";
@@ -2623,11 +2623,9 @@ var Factory = function() {
         });
     };
     var getActivitiesList = function() {
-        console.log("activities", activities);
         return activities.list;
     };
     var getBodiesList = function() {
-        console.log("body_weight", body_weight);
         return body_weight.list;
     };
     return {
@@ -2930,6 +2928,7 @@ var ModalView = Backbone.NativeView.extend({
 
 var NewSession = Backbone.NativeView.extend({
     el: "#new-session-view",
+    model: new Session(),
     subview: "",
     events: {
         "click #select-activity": "activitySelected",
@@ -3224,6 +3223,7 @@ var SessionsView = Backbone.NativeView.extend({
 var ReportsView = Backbone.NativeView.extend({
     el: "#reports-view",
     weightChart: dc.lineChart("#reports-weight-graph"),
+    caloriesChart: dc.barChart("#reports-calories-graph"),
     initialize: function() {
         this.collection = Dashboard;
         this.listenTo(BodyWeights, "sync", this.render);
@@ -3256,6 +3256,7 @@ var ReportsView = Backbone.NativeView.extend({
             }
             console.log("first - last", first, last);
             that.weightChart.focus([ first, last ]);
+            that.caloriesChart.focus([ first, last ]);
         });
     },
     render: function() {
@@ -3282,6 +3283,14 @@ var ReportsView = Backbone.NativeView.extend({
             return parseFloat(d.value, 10);
         });
         this.weightChart.x(d3.time.scale().domain([ new Date(new Date().getFullYear(), 0, 1), new Date(new Date().getFullYear(), 11, 31) ])).dimension(date_weight_dim).renderHorizontalGridLines(true).renderVerticalGridLines(true).brushOn(false).mouseZoomable(false).yAxisLabel("Weight (kg)").colors(blue).group(weightGroup, "Weight");
+        var ndx_act = crossfilter(act_data);
+        var date_act_dim = ndx_act.dimension(function(d) {
+            return d.month;
+        });
+        var caloriesGroup = date_act_dim.group().reduceSum(function(d) {
+            return parseInt(d.calories, 10);
+        });
+        this.caloriesChart.x(d3.time.scale().domain([ new Date(new Date().getFullYear(), 0, 1), new Date(new Date().getFullYear(), 11, 31) ])).round(d3.time.month.round).xUnits(d3.time.days).renderHorizontalGridLines(true).renderVerticalGridLines(true).brushOn(false).mouseZoomable(false).yAxisLabel("Burned calories (kcal)").colors(red).dimension(date_act_dim).group(caloriesGroup);
         dc.renderAll();
     }
 });
@@ -3324,9 +3333,6 @@ var NavigationView = Backbone.NativeView.extend({
         this.listenTo(BodyWeights, "add-new", this.showDashboard);
     },
     showNewSession: function() {
-        new NewSession({
-            model: new Session()
-        });
         this._viewSection(this.dom.new_session_view, this.dom.new_session_btn);
     },
     showNewBodyWeight: function() {
@@ -3417,6 +3423,7 @@ var Router = Backbone.Router.extend({
         new IndicatorsView();
         new SessionsView();
         new ReportsView();
+        new NewSession();
     }
 });
 

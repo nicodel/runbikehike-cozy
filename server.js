@@ -3,7 +3,7 @@
 
 var americano = require('americano');
 
-var port = process.env.port || 9250;
+var port = process.env.port || 9550;
 americano.start({
   name    : 'runbikehike',
   port    : port,
