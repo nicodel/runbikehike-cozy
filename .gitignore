@@ -31,4 +31,4 @@ db*
 
 # vagrant
 .vagrant
-VagrantFile
+Vagrantfile
