@@ -2740,6 +2740,9 @@ var DashboardView = Backbone.NativeView.extend({
     viewsList: [],
     sortAscending: false,
     sortAttribute: "date",
+    sortIt: function(ev, res) {
+        console.log("sortIt", ev, res);
+    },
     initialize: function() {
         this.collection = Dashboard;
         this.listenTo(Messages, "sync", this.resync);
@@ -2753,7 +2756,11 @@ var DashboardView = Backbone.NativeView.extend({
             that.sortCollection();
         });
         document.getElementById("dashboard-sort-ascending").addEventListener("change", function(ev) {
-            that.sortAscending = ev.target.value;
+            if (ev.target.value === "false") {
+                that.sortAscending = false;
+            } else {
+                that.sortAscending = true;
+            }
             that.sortCollection();
         });
         this.sortCollection();
@@ -2769,31 +2776,31 @@ var DashboardView = Backbone.NativeView.extend({
         BodyWeights.forEach(function(item) {
             this.collection.add(item);
         }, this);
-        this.render();
+        this.sortCollection();
     },
     sortCollection: function() {
         if (this.collection.length !== 0) {
             var that = this;
+            console.log("sorting collection by", this.sortAttribute, this.sortAscending);
             this.collection.comparator = function(doc) {
                 var activity = doc.get("activity");
                 var timestamp = doc.get("date");
                 if (!that.sortAscending) {
                     if (that.sortAttribute === "date") {
                         return that.negateString(timestamp);
-                    }
-                    if (that.sortAttribute === "activity") {
+                    } else if (that.sortAttribute === "activity") {
                         return that.negateString(that.negateString(activity) + "-" + that.negateString(timestamp));
                     }
                 } else {
                     if (that.sortAttribute === "date") {
                         return timestamp;
-                    }
-                    if (that.sortAttribute === "activity") {
+                    } else if (that.sortAttribute === "activity") {
                         return that.negateString(activity) + "-" + timestamp;
                     }
                 }
             };
             this.collection.sort();
+            console.log("collection has been sorted", this.collection);
             this.render();
         }
     },
@@ -2831,11 +2838,8 @@ var DashboardView = Backbone.NativeView.extend({
     },
     itemSelected: function(item) {
         var entry_cid = item.target.getAttribute("session_id");
-        console.log("click dashboard", item.target);
         this.viewsList.forEach(function(view) {
-            console.log("clicked", view.model.cid);
             if (view.model.cid === entry_cid) {
-                console.log("entry triggered");
                 this.collection.trigger("dashboard-entry-selected", view.model);
             }
         }, this);
@@ -3409,7 +3413,6 @@ var NavigationView = Backbone.NativeView.extend({
 "use strict";
 
 var Router = Backbone.Router.extend({
-    initialize: function() {},
     routes: {
         "": "start"
     },
